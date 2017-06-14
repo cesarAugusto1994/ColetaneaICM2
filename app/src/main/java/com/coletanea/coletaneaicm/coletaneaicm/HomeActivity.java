@@ -1,49 +1,47 @@
 package com.coletanea.coletaneaicm.coletaneaicm;
 
-import android.app.Activity;
-import android.os.AsyncTask;
+import android.app.ProgressDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.coletanea.coletaneaicm.coletaneaicm.connection.DownloadDados;
+import com.coletanea.coletaneaicm.coletaneaicm.adapters.ColecaoListAdapter;
 import com.coletanea.coletaneaicm.coletaneaicm.model.Colecao;
-import com.coletanea.coletaneaicm.coletaneaicm.retrofit.retrofitService;
-import com.coletanea.coletaneaicm.coletaneaicm.retrofit.retrofitService;
+import com.coletanea.coletaneaicm.coletaneaicm.model.ColecoesList;
+import com.coletanea.coletaneaicm.coletaneaicm.retrofit.retrofitClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 public class HomeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    private ListView lista_alunos;
+    private List<Colecao> colecoestList;
+    private ColecaoListAdapter adapter;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+
+        colecoestList = new ArrayList<>();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -52,8 +50,44 @@ public class HomeActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+
+                final ProgressDialog dialog;
+                /**
+                 * Progress Dialog for User Interaction
+                 */
+                dialog = new ProgressDialog(HomeActivity.this);
+                dialog.setTitle("Teste");
+                dialog.setMessage("Echo 123");
+                dialog.show();
+
+                Call<ColecoesList> call = new retrofitClient().getColecoes().getDados();
+
+                call.enqueue(new Callback<ColecoesList>() {
+                    @Override
+                    public void onResponse(Call<ColecoesList> call, Response<ColecoesList> response) {
+
+                        if (response.isSuccessful()) {
+
+                            dialog.dismiss();
+
+                            colecoestList = response.body().getColecoes();
+
+                            adapter = new ColecaoListAdapter(HomeActivity.this, colecoestList);
+                            lista_alunos.setAdapter(adapter);
+                        }
+
+                    }
+
+                    @Override
+                    public void onFailure(Call<ColecoesList> call, Throwable throwable) {
+
+                        TextView textView = (TextView) findViewById(R.id.hello_world);
+                        textView.setText(throwable.getMessage());
+
+                        Toast.makeText(HomeActivity.this, throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+
+                });
             }
         });
 
@@ -65,30 +99,11 @@ public class HomeActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-/*
-        Call call = new retrofit().getColecoes().getDados();
-
-        call.enqueue(new Callback() {
-            @Override
-            public void onResponse(Call call, Response response) {
-                Log.i("onResponse", "sucesso");
-            }
-
-            @Override
-            public void onFailure(Call call, Throwable throwable) {
-                Log.e("onFailure", "erro");
-            }
-        });
-*/
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
-        Call<List<Colecao>> dados = new retrofitService().getColecoes().getDados();
-
-
     }
 
     @Override
